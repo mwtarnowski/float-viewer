@@ -33,8 +33,31 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      const $ = id => document.getElementById(id);
+
+      const bitContainer = $('bit-container');
+      const fvalInput = $('fval-input');
+      const uvalInput = $('uval-input');
+
       const totalBits = 32;
-      const bitContainer = document.getElementById('bit-container');
+      let fval = 0;
+      let uval = 0n;
+
+      const buffer = new ArrayBuffer(4);
+      const uview = new Uint32Array(buffer);
+      const fview = new Float32Array(buffer);
+
+      function setBit(index, bit) {
+        const mask = 1n << BigInt(index);
+        uval = bit ? (uval | mask) : (uval & ~mask);
+        uview[0] = Number(uval);
+        fval = fview[0];
+      }
+
+      function update() {
+        fvalInput.value = fval.toString();
+        uvalInput.value = uval.toString(16);
+      }
 
       for (let index = totalBits - 1; index >= 0; index--) {
         const bitCell = document.createElement('div');
@@ -47,12 +70,25 @@
 
         const bitBtn = document.createElement('button');
         bitBtn.classList.add('bit-btn');
+        bitBtn.dataset.index = index;
+        bitBtn.dataset.value = '0';
         bitBtn.textContent = '0';
-        bitBtn.onclick = () => (bitBtn.textContent = bitBtn.textContent === '0' ? '1' : '0');
         bitCell.appendChild(bitBtn);
 
         bitContainer.append(bitCell);
       }
+
+      bitContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('button.bit-btn');
+        if (!btn) return;
+        const index = Number(btn.dataset.index);
+        const value = 1 ^ Number(btn.dataset.value);
+        btn.textContent = btn.dataset.value = value;
+        setBit(index, value);
+        update();
+      });
+
+      update();
     });
   </script>
 
