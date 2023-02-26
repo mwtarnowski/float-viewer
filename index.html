@@ -5,10 +5,57 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Float Viewer</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  Float Viewer
+
+  <div class="main-content">
+
+    <div id="bit-container" class="bit-container">
+      <!-- bit-cell elements here -->
+    </div>
+
+    <div class="hline"></div>
+
+    <div class="field-container">
+      <div class="field-group">
+        <label class="field-label" for="fval-input">Value:</label>
+        <input class="field-input" type="text" id="fval-input">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="uval-input">Hex Raw:</label>
+        <input class="field-input" type="text" id="uval-input">
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const totalBits = 32;
+      const bitContainer = document.getElementById('bit-container');
+
+      for (let index = totalBits - 1; index >= 0; index--) {
+        const bitCell = document.createElement('div');
+        bitCell.classList.add('bit-cell');
+
+        const bitIdx = document.createElement('div');
+        bitIdx.classList.add('bit-idx');
+        bitIdx.textContent = index.toString().padStart(2, '0');
+        bitCell.appendChild(bitIdx);
+
+        const bitBtn = document.createElement('button');
+        bitBtn.classList.add('bit-btn');
+        bitBtn.textContent = '0';
+        bitBtn.onclick = () => (bitBtn.textContent = bitBtn.textContent === '0' ? '1' : '0');
+        bitCell.appendChild(bitBtn);
+
+        bitContainer.append(bitCell);
+      }
+    });
+  </script>
+
 </body>
 
 </html>
