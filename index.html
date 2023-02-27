@@ -9,31 +9,43 @@
 </head>
 
 <body>
-
-  <div class="main-content">
-
-    <div id="bit-container" class="bit-container">
-      <!-- bit-cell elements here -->
+  <header>
+    <div class="header-left">
+      <div class="site-logo"></div>
+      <h1 class="site-title">Float Viewer</h1>
     </div>
+  </header>
 
-    <div class="hline"></div>
+  <main>
+    <div class="main-content">
 
-    <div class="field-container">
-      <div class="field-group">
-        <label class="field-label" for="fval-input">Value:</label>
-        <div class="field-control">
-          <input class="field-input" type="text" id="fval-input">
+      <div id="bit-container" class="bit-container">
+        <!-- bit-cell elements here -->
+      </div>
+
+      <div class="hline"></div>
+
+      <div class="field-container">
+        <div class="field-group">
+          <label class="field-label" for="fval-input">Value:</label>
+          <div class="field-control">
+            <input class="field-input" type="text" id="fval-input">
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="uval-input">Hex Raw:</label>
+          <div class="field-control">
+            <input class="field-input" type="text" id="uval-input">
+          </div>
         </div>
       </div>
-      <div class="field-group">
-        <label class="field-label" for="uval-input">Hex Raw:</label>
-        <div class="field-control">
-          <input class="field-input" type="text" id="uval-input">
-        </div>
-      </div>
-    </div>
 
-  </div>
+    </div>
+  </main>
+
+  <footer>
+    <p class="footnote">&nbsp;</p>
+  </footer>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {

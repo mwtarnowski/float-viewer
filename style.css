@@ -24,12 +24,36 @@ html {
 body {
   display: flex;
   flex-direction: column;
-  align-items: center;
   min-height: 100vh;
-  padding: 1rem;
   line-height: 1.5;
   color: #333333;
   background-color: #f8fafc;
+}
+
+header,
+footer {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background-color: #d9e8ff;
+}
+
+header {
+  justify-content: space-between;
+  border-bottom: 1px solid #cccccc;
+}
+
+footer {
+  justify-content: center;
+  border-top: 1px solid #cccccc;
+}
+
+main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
 }
 
 input,
@@ -41,6 +65,35 @@ button {
 
 input {
   background-color: #ffffff;
+}
+
+a {
+  color: inherit;
+}
+
+.header-left {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.site-logo {
+  width: 1.5rem;
+  height: 1.5rem;
+  background-color: #082c8f;
+  border-radius: 4px;
+}
+
+.site-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+  color: #082c8f;
+}
+
+.footnote {
+  font-size: 0.75rem;
+  color: #475fa5;
 }
 
 .main-content {
