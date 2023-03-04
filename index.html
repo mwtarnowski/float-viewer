@@ -56,6 +56,7 @@
       const uvalInput = $('uval-input');
 
       const totalBits = 32;
+      const maxUval = (1n << BigInt(totalBits)) - 1n;
       let fval = 0;
       let uval = 0n;
 
@@ -63,36 +64,134 @@
       const uview = new Uint32Array(buffer);
       const fview = new Float32Array(buffer);
 
-      function setBit(index, bit) {
-        const mask = 1n << BigInt(index);
-        uval = bit ? (uval | mask) : (uval & ~mask);
+      function toFP32(number) {
+        fview[0] = number;
+        return fview[0];
+      }
+
+      function syncFval() {
         uview[0] = Number(uval);
         fval = fview[0];
       }
 
-      function update() {
+      function syncUval() {
+        fview[0] = fval;
+        uval = BigInt(uview[0]);
+      }
+
+      function getBit(index) {
+        return Number((uval >> BigInt(index)) & 1n);
+      }
+
+      function setBit(index, bit) {
+        const mask = 1n << BigInt(index);
+        uval = bit ? (uval | mask) : (uval & ~mask);
+        syncFval();
+      }
+
+      let bitButtons = [];
+      function generateBitGrid() {
+        bitButtons = [];
+        const grid = document.createDocumentFragment();
+
+        for (let index = totalBits - 1; index >= 0; index--) {
+          const bitCell = document.createElement('div');
+          bitCell.classList.add('bit-cell');
+
+          const bitIdx = document.createElement('div');
+          bitIdx.classList.add('bit-idx');
+          bitIdx.textContent = index.toString().padStart(2, '0');
+          bitCell.appendChild(bitIdx);
+
+          const bitBtn = document.createElement('button');
+          bitBtn.classList.add('bit-btn');
+          bitBtn.dataset.index = index;
+          bitBtn.dataset.value = '0';
+          bitBtn.textContent = '0';
+          bitButtons.push(bitBtn);
+          bitCell.appendChild(bitBtn);
+
+          grid.append(bitCell);
+        }
+
+        bitContainer.replaceChildren(grid);
+      }
+
+      function updateFval() {
         fvalInput.value = fval.toString();
+        fvalInput.classList.remove('invalid');
+      }
+
+      function updateUval() {
         uvalInput.value = uval.toString(16);
+        uvalInput.classList.remove('invalid');
       }
 
-      for (let index = totalBits - 1; index >= 0; index--) {
-        const bitCell = document.createElement('div');
-        bitCell.classList.add('bit-cell');
-
-        const bitIdx = document.createElement('div');
-        bitIdx.classList.add('bit-idx');
-        bitIdx.textContent = index.toString().padStart(2, '0');
-        bitCell.appendChild(bitIdx);
-
-        const bitBtn = document.createElement('button');
-        bitBtn.classList.add('bit-btn');
-        bitBtn.dataset.index = index;
-        bitBtn.dataset.value = '0';
-        bitBtn.textContent = '0';
-        bitCell.appendChild(bitBtn);
-
-        bitContainer.append(bitCell);
+      function updateBitGrid() {
+        bitButtons.forEach(btn => {
+          const index = Number(btn.dataset.index);
+          const value = getBit(index);
+          btn.textContent = btn.dataset.value = value;
+        });
       }
+
+      function updateAll() {
+        updateFval();
+        updateUval();
+        updateBitGrid();
+      }
+
+      function parseFloatStrict(str) {
+        if (!str) return;
+        const number = Number(str);
+        if (isNaN(number) && str !== "NaN") return;
+        return toFP32(number);
+      }
+
+      fvalInput.addEventListener('input', () => {
+        const value = parseFloatStrict(fvalInput.value);
+        fvalInput.classList.toggle('invalid', value == null);
+      });
+
+      fvalInput.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        const value = parseFloatStrict(fvalInput.value);
+        if (value != null) {
+          fval = value;
+          syncUval();
+          updateAll();
+        } else {
+          updateFval();
+        }
+      });
+
+      fvalInput.addEventListener('blur', updateFval);
+
+      function parseBigUint(str, radix) {
+        if (!str) return;
+        const regex = radix == 16 ? /^[0-9A-F]+$/i : /^[0-9]+$/;
+        if (!regex.test(str)) return;
+        return BigInt(radix == 16 ? '0x' + str : str);
+      }
+
+      uvalInput.addEventListener('input', () => {
+        const value = parseBigUint(uvalInput.value, 16);
+        uvalInput.classList.toggle('invalid', value == null || value > maxUval);
+      });
+
+      uvalInput.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        const value = parseBigUint(uvalInput.value, 16);
+        if (value != null && value <= maxUval) {
+          uval = value;
+          syncFval();
+          updateAll();
+        } else {
+          updateUval();
+        }
+      });
+
+      uvalInput.addEventListener('blur', updateUval);
 
       bitContainer.addEventListener('click', (e) => {
         const btn = e.target.closest('button.bit-btn');
@@ -101,10 +200,12 @@
         const value = 1 ^ Number(btn.dataset.value);
         btn.textContent = btn.dataset.value = value;
         setBit(index, value);
-        update();
+        updateFval();
+        updateUval();
       });
 
-      update();
+      generateBitGrid();
+      updateAll();
     });
   </script>
 
