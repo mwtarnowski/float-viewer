@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Float Viewer</title>
   <link rel="stylesheet" href="style.css">
+  <script src="float.js" defer></script>
 </head>
 
 <body>
@@ -55,42 +56,12 @@
       const fvalInput = $('fval-input');
       const uvalInput = $('uval-input');
 
-      const totalBits = 32;
-      const maxUval = (1n << BigInt(totalBits)) - 1n;
-      let fval = 0;
-      let uval = 0n;
-
-      const buffer = new ArrayBuffer(4);
-      const uview = new Uint32Array(buffer);
-      const fview = new Float32Array(buffer);
-
-      function toFP32(number) {
-        fview[0] = number;
-        return fview[0];
-      }
-
-      function syncFval() {
-        uview[0] = Number(uval);
-        fval = fview[0];
-      }
-
-      function syncUval() {
-        fview[0] = fval;
-        uval = BigInt(uview[0]);
-      }
-
-      function getBit(index) {
-        return Number((uval >> BigInt(index)) & 1n);
-      }
-
-      function setBit(index, bit) {
-        const mask = 1n << BigInt(index);
-        uval = bit ? (uval | mask) : (uval & ~mask);
-        syncFval();
-      }
+      const fp = new FloatingPoint();
 
       let bitButtons = [];
       function generateBitGrid() {
+        const totalBits = fp.totalBits;
+
         bitButtons = [];
         const grid = document.createDocumentFragment();
 
@@ -118,19 +89,19 @@
       }
 
       function updateFval() {
-        fvalInput.value = fval.toString();
+        fvalInput.value = fp.getNumber().toString();
         fvalInput.classList.remove('invalid');
       }
 
       function updateUval() {
-        uvalInput.value = uval.toString(16);
+        uvalInput.value = fp.getRaw().toString(16);
         uvalInput.classList.remove('invalid');
       }
 
       function updateBitGrid() {
         bitButtons.forEach(btn => {
           const index = Number(btn.dataset.index);
-          const value = getBit(index);
+          const value = fp.getBit(index);
           btn.textContent = btn.dataset.value = value;
         });
       }
@@ -141,13 +112,6 @@
         updateBitGrid();
       }
 
-      function parseFloatStrict(str) {
-        if (!str) return;
-        const number = Number(str);
-        if (isNaN(number) && str !== "NaN") return;
-        return toFP32(number);
-      }
-
       fvalInput.addEventListener('input', () => {
         const value = parseFloatStrict(fvalInput.value);
         fvalInput.classList.toggle('invalid', value == null);
@@ -156,39 +120,20 @@
       fvalInput.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter') return;
         const value = parseFloatStrict(fvalInput.value);
-        if (value != null) {
-          fval = value;
-          syncUval();
-          updateAll();
-        } else {
-          updateFval();
-        }
+        fp.setNumber(value) ? updateAll() : updateFval();
       });
 
       fvalInput.addEventListener('blur', updateFval);
 
-      function parseBigUint(str, radix) {
-        if (!str) return;
-        const regex = radix == 16 ? /^[0-9A-F]+$/i : /^[0-9]+$/;
-        if (!regex.test(str)) return;
-        return BigInt(radix == 16 ? '0x' + str : str);
-      }
-
       uvalInput.addEventListener('input', () => {
         const value = parseBigUint(uvalInput.value, 16);
-        uvalInput.classList.toggle('invalid', value == null || value > maxUval);
+        uvalInput.classList.toggle('invalid', !fp.isValidRaw(value));
       });
 
       uvalInput.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter') return;
         const value = parseBigUint(uvalInput.value, 16);
-        if (value != null && value <= maxUval) {
-          uval = value;
-          syncFval();
-          updateAll();
-        } else {
-          updateUval();
-        }
+        fp.setRaw(value) ? updateAll() : updateUval();
       });
 
       uvalInput.addEventListener('blur', updateUval);
@@ -199,7 +144,7 @@
         const index = Number(btn.dataset.index);
         const value = 1 ^ Number(btn.dataset.value);
         btn.textContent = btn.dataset.value = value;
-        setBit(index, value);
+        fp.setBit(index, value);
         updateFval();
         updateUval();
       });
