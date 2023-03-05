@@ -33,18 +33,62 @@ function parseFloatStrict(str) {
 
 class FloatingPoint {
   constructor() {
-    this.totalBits = 32;
+    this.exponentBits = 8n;
+    this.mantissaBits = 23n;
+    this.totalBits = 1n + this.exponentBits + this.mantissaBits;
+
+    this.maxRaw = (1n << this.totalBits) - 1n;
+    this.maxExponent = (1n << this.exponentBits) - 1n;
+    this.maxMantissa = (1n << this.mantissaBits) - 1n;
+
     this.raw = 0n;
-    this.maxRaw = (1n << BigInt(this.totalBits)) - 1n;
+    this.sign = 0n;
+    this.exponent = 0n;
+    this.mantissa = 0n;
+  }
+
+  updateParts() {
+    this.sign = (this.raw >> (this.exponentBits + this.mantissaBits)) & 1n;
+    this.exponent = (this.raw >> this.mantissaBits) & this.maxExponent;
+    this.mantissa = this.raw & this.maxMantissa;
+  }
+
+  updateRaw() {
+    this.raw = (this.sign << this.exponentBits | this.exponent) << this.mantissaBits | this.mantissa;
   }
 
   isValidRaw(raw) { return raw != null && 0n <= raw && raw <= this.maxRaw; }
+  isValidSign(sign) { return sign != null && 0n <= sign && sign <= 1n; }
+  isValidExponent(exponent) { return exponent != null && 0n <= exponent && exponent <= this.maxExponent; }
+  isValidMantissa(mantissa) { return mantissa != null && 0n <= mantissa && mantissa <= this.maxMantissa; }
 
   getRaw() { return this.raw; }
+  getSign() { return this.sign; }
+  getExponent() { return this.exponent; }
+  getMantissa() { return this.mantissa; }
 
   setRaw(raw) {
     if (!this.isValidRaw(raw) || this.raw === raw) return false;
     this.raw = raw;
+    this.updateParts();
+    return true;
+  }
+  setSign(sign) {
+    if (!this.isValidSign(sign) || this.sign === sign) return false;
+    this.sign = sign;
+    this.updateRaw();
+    return true;
+  }
+  setExponent(exponent) {
+    if (!this.isValidExponent(exponent) || this.exponent === exponent) return false;
+    this.exponent = exponent;
+    this.updateRaw();
+    return true;
+  }
+  setMantissa(mantissa) {
+    if (!this.isValidMantissa(mantissa) || this.mantissa === mantissa) return false;
+    this.mantissa = mantissa;
+    this.updateRaw();
     return true;
   }
 
