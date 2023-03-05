@@ -28,15 +28,33 @@
 
       <div class="field-container">
         <div class="field-group">
-          <label class="field-label" for="fval-input">Value:</label>
+          <label class="field-label" for="flt-input">Value:</label>
           <div class="field-control">
-            <input class="field-input" type="text" id="fval-input">
+            <input class="field-input" type="text" id="flt-input">
           </div>
         </div>
         <div class="field-group">
-          <label class="field-label" for="uval-input">Hex Raw:</label>
+          <label class="field-label" for="raw-input">Hex Raw:</label>
           <div class="field-control">
-            <input class="field-input" type="text" id="uval-input">
+            <input class="field-input" type="text" id="raw-input">
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="sgn-input">Sign:</label>
+          <div class="field-control">
+            <input class="field-input" type="text" id="sgn-input">
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="exp-input">Exponent:</label>
+          <div class="field-control">
+            <input class="field-input" type="text" id="exp-input">
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="man-input">Significand:</label>
+          <div class="field-control">
+            <input class="field-input" type="text" id="man-input">
           </div>
         </div>
       </div>
@@ -51,10 +69,17 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const $ = id => document.getElementById(id);
+      const toggleValid = (input, valid) => input.classList.toggle('invalid', !valid);
 
       const bitContainer = $('bit-container');
-      const fvalInput = $('fval-input');
-      const uvalInput = $('uval-input');
+
+      const inputs = {
+        flt: $('flt-input'),
+        raw: $('raw-input'),
+        sgn: $('sgn-input'),
+        exp: $('exp-input'),
+        man: $('man-input'),
+      };
 
       const fp = new FloatingPoint();
 
@@ -88,14 +113,16 @@
         bitContainer.replaceChildren(grid);
       }
 
-      function updateFval() {
-        fvalInput.value = fp.getNumber().toString();
-        fvalInput.classList.remove('invalid');
-      }
+      const update = {
+        flt: () => { inputs.flt.value = fp.getNumber().toString(); toggleValid(inputs.flt, true); },
+        raw: () => { inputs.raw.value = fp.getRaw().toString(16); toggleValid(inputs.raw, true); },
+        sgn: () => { inputs.sgn.value = fp.getSign().toString(); toggleValid(inputs.sgn, true); },
+        exp: () => { inputs.exp.value = fp.getExponent().toString(); toggleValid(inputs.exp, true); },
+        man: () => { inputs.man.value = fp.getMantissa().toString(); toggleValid(inputs.man, true); },
+      };
 
-      function updateUval() {
-        uvalInput.value = fp.getRaw().toString(16);
-        uvalInput.classList.remove('invalid');
+      function updateFields() {
+        for (const key in update) update[key]();
       }
 
       function updateBitGrid() {
@@ -107,36 +134,31 @@
       }
 
       function updateAll() {
-        updateFval();
-        updateUval();
+        updateFields();
         updateBitGrid();
       }
 
-      fvalInput.addEventListener('input', () => {
-        const value = parseFloatStrict(fvalInput.value);
-        fvalInput.classList.toggle('invalid', value == null);
-      });
+      const check = {
+        flt: () => { toggleValid(inputs.flt, parseFloatStrict(inputs.flt.value) != null); },
+        raw: () => { toggleValid(inputs.raw, fp.isValidRaw(parseBigUint(inputs.raw.value, 16))); },
+        sgn: () => { toggleValid(inputs.sgn, fp.isValidSign(parseBigUint(inputs.sgn.value))); },
+        exp: () => { toggleValid(inputs.exp, fp.isValidExponent(parseBigUint(inputs.exp.value))); },
+        man: () => { toggleValid(inputs.man, fp.isValidMantissa(parseBigUint(inputs.man.value))); },
+      };
 
-      fvalInput.addEventListener('keydown', (e) => {
-        if (e.key !== 'Enter') return;
-        const value = parseFloatStrict(fvalInput.value);
-        fp.setNumber(value) ? updateAll() : updateFval();
-      });
+      const commit = {
+        flt: () => { fp.setNumber(parseFloatStrict(inputs.flt.value)) ? updateAll() : update.flt(); },
+        raw: () => { fp.setRaw(parseBigUint(inputs.raw.value, 16)) ? updateAll() : update.raw(); },
+        sgn: () => { fp.setSign(parseBigUint(inputs.sgn.value)) ? updateAll() : update.sgn(); },
+        exp: () => { fp.setExponent(parseBigUint(inputs.exp.value)) ? updateAll() : update.exp(); },
+        man: () => { fp.setMantissa(parseBigUint(inputs.man.value)) ? updateAll() : update.man(); },
+      };
 
-      fvalInput.addEventListener('blur', updateFval);
-
-      uvalInput.addEventListener('input', () => {
-        const value = parseBigUint(uvalInput.value, 16);
-        uvalInput.classList.toggle('invalid', !fp.isValidRaw(value));
-      });
-
-      uvalInput.addEventListener('keydown', (e) => {
-        if (e.key !== 'Enter') return;
-        const value = parseBigUint(uvalInput.value, 16);
-        fp.setRaw(value) ? updateAll() : updateUval();
-      });
-
-      uvalInput.addEventListener('blur', updateUval);
+      for (const key in inputs) {
+        inputs[key].addEventListener('input', check[key]);
+        inputs[key].addEventListener('keydown', (e) => e.key === 'Enter' && commit[key]());
+        inputs[key].addEventListener('blur', update[key]);
+      }
 
       bitContainer.addEventListener('click', (e) => {
         const btn = e.target.closest('button.bit-btn');
@@ -145,8 +167,7 @@
         const value = 1 ^ Number(btn.dataset.value);
         btn.textContent = btn.dataset.value = value;
         fp.setBit(index, value);
-        updateFval();
-        updateUval();
+        updateFields();
       });
 
       generateBitGrid();
