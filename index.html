@@ -36,25 +36,25 @@
         <div class="field-group">
           <label class="field-label" for="raw-input">Hex Raw:</label>
           <div class="field-control">
-            <input class="field-input" type="text" id="raw-input">
+            <input class="field-input" type="text" id="raw-input" data-radix="16">
           </div>
         </div>
         <div class="field-group">
           <label class="field-label" for="sgn-input">Sign:</label>
           <div class="field-control">
-            <input class="field-input" type="text" id="sgn-input">
+            <input class="field-input" type="text" id="sgn-input" data-radix="10">
           </div>
         </div>
         <div class="field-group">
           <label class="field-label" for="exp-input">Exponent:</label>
           <div class="field-control">
-            <input class="field-input" type="text" id="exp-input">
+            <input class="field-input" type="text" id="exp-input" data-radix="10">
           </div>
         </div>
         <div class="field-group">
           <label class="field-label" for="man-input">Significand:</label>
           <div class="field-control">
-            <input class="field-input" type="text" id="man-input">
+            <input class="field-input" type="text" id="man-input" data-radix="10">
           </div>
         </div>
       </div>
@@ -115,10 +115,10 @@
 
       const update = {
         flt: () => { inputs.flt.value = fp.getNumber().toString(); toggleValid(inputs.flt, true); },
-        raw: () => { inputs.raw.value = fp.getRaw().toString(16); toggleValid(inputs.raw, true); },
-        sgn: () => { inputs.sgn.value = fp.getSign().toString(); toggleValid(inputs.sgn, true); },
-        exp: () => { inputs.exp.value = fp.getExponent().toString(); toggleValid(inputs.exp, true); },
-        man: () => { inputs.man.value = fp.getMantissa().toString(); toggleValid(inputs.man, true); },
+        raw: () => { inputs.raw.value = fp.getRaw().toString(inputs.raw.dataset.radix); toggleValid(inputs.raw, true); },
+        sgn: () => { inputs.sgn.value = fp.getSign().toString(inputs.sgn.dataset.radix); toggleValid(inputs.sgn, true); },
+        exp: () => { inputs.exp.value = fp.getExponent().toString(inputs.exp.dataset.radix); toggleValid(inputs.exp, true); },
+        man: () => { inputs.man.value = fp.getMantissa().toString(inputs.man.dataset.radix); toggleValid(inputs.man, true); },
       };
 
       function updateFields() {
@@ -140,18 +140,18 @@
 
       const check = {
         flt: () => { toggleValid(inputs.flt, parseFloatStrict(inputs.flt.value) != null); },
-        raw: () => { toggleValid(inputs.raw, fp.isValidRaw(parseBigUint(inputs.raw.value, 16))); },
-        sgn: () => { toggleValid(inputs.sgn, fp.isValidSign(parseBigUint(inputs.sgn.value))); },
-        exp: () => { toggleValid(inputs.exp, fp.isValidExponent(parseBigUint(inputs.exp.value))); },
-        man: () => { toggleValid(inputs.man, fp.isValidMantissa(parseBigUint(inputs.man.value))); },
+        raw: () => { toggleValid(inputs.raw, fp.isValidRaw(parseBigUint(inputs.raw.value, inputs.raw.dataset.radix))); },
+        sgn: () => { toggleValid(inputs.sgn, fp.isValidSign(parseBigUint(inputs.sgn.value, inputs.sgn.dataset.radix))); },
+        exp: () => { toggleValid(inputs.exp, fp.isValidExponent(parseBigUint(inputs.exp.value, inputs.exp.dataset.radix))); },
+        man: () => { toggleValid(inputs.man, fp.isValidMantissa(parseBigUint(inputs.man.value, inputs.man.dataset.radix))); },
       };
 
       const commit = {
         flt: () => { fp.setNumber(parseFloatStrict(inputs.flt.value)) ? updateAll() : update.flt(); },
-        raw: () => { fp.setRaw(parseBigUint(inputs.raw.value, 16)) ? updateAll() : update.raw(); },
-        sgn: () => { fp.setSign(parseBigUint(inputs.sgn.value)) ? updateAll() : update.sgn(); },
-        exp: () => { fp.setExponent(parseBigUint(inputs.exp.value)) ? updateAll() : update.exp(); },
-        man: () => { fp.setMantissa(parseBigUint(inputs.man.value)) ? updateAll() : update.man(); },
+        raw: () => { fp.setRaw(parseBigUint(inputs.raw.value, inputs.raw.dataset.radix)) ? updateAll() : update.raw(); },
+        sgn: () => { fp.setSign(parseBigUint(inputs.sgn.value, inputs.sgn.dataset.radix)) ? updateAll() : update.sgn(); },
+        exp: () => { fp.setExponent(parseBigUint(inputs.exp.value, inputs.exp.dataset.radix)) ? updateAll() : update.exp(); },
+        man: () => { fp.setMantissa(parseBigUint(inputs.man.value, inputs.man.dataset.radix)) ? updateAll() : update.man(); },
       };
 
       for (const key in inputs) {

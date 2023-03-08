@@ -203,6 +203,10 @@ a {
   color: #20202073;
 }
 
+.field-input[data-radix] {
+  text-transform: uppercase;
+}
+
 @media (min-width: 640px) {
   .field-group {
     grid-template-columns: min-content 1fr;
