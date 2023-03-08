@@ -113,16 +113,9 @@
         bitContainer.replaceChildren(grid);
       }
 
-      const update = {
-        flt: () => { inputs.flt.value = fp.getNumber().toString(); toggleValid(inputs.flt, true); },
-        raw: () => { inputs.raw.value = fp.getRaw().toString(inputs.raw.dataset.radix); toggleValid(inputs.raw, true); },
-        sgn: () => { inputs.sgn.value = fp.getSign().toString(inputs.sgn.dataset.radix); toggleValid(inputs.sgn, true); },
-        exp: () => { inputs.exp.value = fp.getExponent().toString(inputs.exp.dataset.radix); toggleValid(inputs.exp, true); },
-        man: () => { inputs.man.value = fp.getMantissa().toString(inputs.man.dataset.radix); toggleValid(inputs.man, true); },
-      };
-
+      let fieldUpdate = {};
       function updateFields() {
-        for (const key in update) update[key]();
+        for (const key in fieldUpdate) fieldUpdate[key]();
       }
 
       function updateBitGrid() {
@@ -138,26 +131,33 @@
         updateBitGrid();
       }
 
-      const check = {
-        flt: () => { toggleValid(inputs.flt, parseFloatStrict(inputs.flt.value) != null); },
-        raw: () => { toggleValid(inputs.raw, fp.isValidRaw(parseBigUint(inputs.raw.value, inputs.raw.dataset.radix))); },
-        sgn: () => { toggleValid(inputs.sgn, fp.isValidSign(parseBigUint(inputs.sgn.value, inputs.sgn.dataset.radix))); },
-        exp: () => { toggleValid(inputs.exp, fp.isValidExponent(parseBigUint(inputs.exp.value, inputs.exp.dataset.radix))); },
-        man: () => { toggleValid(inputs.man, fp.isValidMantissa(parseBigUint(inputs.man.value, inputs.man.dataset.radix))); },
+      const configs = {
+        flt: { parse: parseFloatStrict, isval: x => x != null,
+          get: fp.getNumber.bind(fp), set: fp.setNumber.bind(fp) },
+        raw: { parse: parseBigUint, isval: fp.isValidRaw.bind(fp), 
+          get: fp.getRaw.bind(fp), set: fp.setRaw.bind(fp) },
+        sgn: { parse: parseBigUint, isval: fp.isValidSign.bind(fp),
+          get: fp.getSign.bind(fp), set: fp.setSign.bind(fp) },
+        exp: { parse: parseBigUint, isval: fp.isValidExponent.bind(fp),
+          get: fp.getExponent.bind(fp), set: fp.setExponent.bind(fp) },
+        man: { parse: parseBigUint, isval: fp.isValidMantissa.bind(fp),
+          get: fp.getMantissa.bind(fp), set: fp.setMantissa.bind(fp) },
       };
 
-      const commit = {
-        flt: () => { fp.setNumber(parseFloatStrict(inputs.flt.value)) ? updateAll() : update.flt(); },
-        raw: () => { fp.setRaw(parseBigUint(inputs.raw.value, inputs.raw.dataset.radix)) ? updateAll() : update.raw(); },
-        sgn: () => { fp.setSign(parseBigUint(inputs.sgn.value, inputs.sgn.dataset.radix)) ? updateAll() : update.sgn(); },
-        exp: () => { fp.setExponent(parseBigUint(inputs.exp.value, inputs.exp.dataset.radix)) ? updateAll() : update.exp(); },
-        man: () => { fp.setMantissa(parseBigUint(inputs.man.value, inputs.man.dataset.radix)) ? updateAll() : update.man(); },
-      };
+      for (const key in configs) {
+        const input = inputs[key];
+        const radix = input.dataset.radix;
+        const { parse, isval, get, set } = configs[key];
 
-      for (const key in inputs) {
-        inputs[key].addEventListener('input', check[key]);
-        inputs[key].addEventListener('keydown', (e) => e.key === 'Enter' && commit[key]());
-        inputs[key].addEventListener('blur', update[key]);
+        const check = () => { toggleValid(input, isval(parse(input.value, radix))); };
+        const update = () => { input.value = get().toString(radix); toggleValid(input, true); };
+        const commit = () => { set(parse(input.value, radix)) ? updateAll() : update(); };
+
+        input.addEventListener('input', check);
+        input.addEventListener('keydown', (e) => e.key === 'Enter' && commit());
+        input.addEventListener('blur', update);
+
+        fieldUpdate[key] = update;
       }
 
       bitContainer.addEventListener('click', (e) => {
