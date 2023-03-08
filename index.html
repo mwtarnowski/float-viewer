@@ -42,19 +42,19 @@
         <div class="field-group">
           <label class="field-label" for="sgn-input">Sign:</label>
           <div class="field-control">
-            <input class="field-input" type="text" id="sgn-input" data-radix="10">
+            <input class="field-input" type="text" id="sgn-input" data-part="sgn" data-radix="10">
           </div>
         </div>
         <div class="field-group">
           <label class="field-label" for="exp-input">Exponent:</label>
           <div class="field-control">
-            <input class="field-input" type="text" id="exp-input" data-radix="10">
+            <input class="field-input" type="text" id="exp-input" data-part="exp" data-radix="10">
           </div>
         </div>
         <div class="field-group">
           <label class="field-label" for="man-input">Significand:</label>
           <div class="field-control">
-            <input class="field-input" type="text" id="man-input" data-radix="10">
+            <input class="field-input" type="text" id="man-input" data-part="man" data-radix="10">
           </div>
         </div>
       </div>
@@ -86,6 +86,8 @@
       let bitButtons = [];
       function generateBitGrid() {
         const totalBits = Number(fp.totalBits);
+        const expIndex = Number(fp.mantissaBits);
+        const sgnIndex = Number(fp.mantissaBits + fp.exponentBits);
 
         bitButtons = [];
         const grid = document.createDocumentFragment();
@@ -102,6 +104,7 @@
           const bitBtn = document.createElement('button');
           bitBtn.classList.add('bit-btn');
           bitBtn.dataset.index = index;
+          bitBtn.dataset.part = index < expIndex ? 'man' : index < sgnIndex ? 'exp' : 'sgn';
           bitBtn.dataset.value = '0';
           bitBtn.textContent = '0';
           bitButtons.push(bitBtn);

@@ -134,6 +134,9 @@ a {
 }
 
 .bit-btn {
+  --background-color: #e0e0e0;
+  --background-color-highlighted: #bebebe;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,18 +148,33 @@ a {
   line-height: 1.5rem;
   color: #000000;
   cursor: pointer;
-  background-color: #e0e0e0;
+  background-color: var(--background-color);
   border: none;
   border-radius: 3px;
 }
 
 .bit-btn:hover,
 .bit-btn:focus-visible {
-  background-color: #bebebe;
+  background-color: var(--background-color-highlighted);
 }
 
 .bit-btn:hover {
   transform: translateY(-1px);
+}
+
+.bit-btn[data-part="sgn"] {
+  --background-color: #b5d8fb;
+  --background-color-highlighted: #8fc3f6;
+}
+
+.bit-btn[data-part="exp"] {
+  --background-color: #b0f3b0;
+  --background-color-highlighted: #80d682;
+}
+
+.bit-btn[data-part="man"] {
+  --background-color: #ffc3c3;
+  --background-color-highlighted: #fca1a2;
 }
 
 .field-container {
@@ -184,13 +202,16 @@ a {
 }
 
 .field-input {
+  --color: #202020;
+  --color-invalid: #20202073;
+
   flex: 1;
   height: 1.875rem;
   padding: 0.2rem 0.5rem;
   font-family: var(--font-mono);
   font-size: 1rem;
   font-weight: 500;
-  color: #202020;
+  color: var(--color);
   letter-spacing: 0.05em;
 }
 
@@ -200,11 +221,26 @@ a {
 
 .field-input:invalid,
 .field-input.invalid {
-  color: #20202073;
+  color: var(--color-invalid);
 }
 
 .field-input[data-radix] {
   text-transform: uppercase;
+}
+
+.field-input[data-part="sgn"] {
+  --color: #005a9d;
+  --color-invalid: #005a9d66;
+}
+
+.field-input[data-part="exp"] {
+  --color: #006300;
+  --color-invalid: #00630066;
+}
+
+.field-input[data-part="man"] {
+  --color: #a01c34;
+  --color-invalid: #a01c3466;
 }
 
 @media (min-width: 640px) {
