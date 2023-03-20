@@ -31,6 +31,11 @@ function parseFloatStrict(str) {
   return numberToFloat32(number);
 }
 
+function incMod(value, max, neg) {
+  return (neg ? (value === 0n ? max : value - 1n) 
+              : (value === max ? 0n : value + 1n));
+}
+
 class FloatingPoint {
   constructor() {
     this.exponentBits = 8n;
@@ -90,6 +95,23 @@ class FloatingPoint {
     this.mantissa = mantissa;
     this.updateRaw();
     return true;
+  }
+
+  incRaw(neg) {
+    this.raw = incMod(this.raw, this.maxRaw, neg);
+    this.updateParts();
+  }
+  incSign() { 
+    this.sign ^= 1n;
+    this.updateRaw();
+  }
+  incExponent(neg) {
+    this.exponent = incMod(this.exponent, this.maxExponent, neg);
+    this.updateRaw();
+  }
+  incMantissa(neg) {
+    this.mantissa = incMod(this.mantissa, this.maxMantissa, neg);
+    this.updateRaw();
   }
 
   getBit(index) {

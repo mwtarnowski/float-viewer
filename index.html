@@ -138,19 +138,19 @@
         flt: { parse: parseFloatStrict, isval: x => x != null,
           get: fp.getNumber.bind(fp), set: fp.setNumber.bind(fp) },
         raw: { parse: parseBigUint, isval: fp.isValidRaw.bind(fp), 
-          get: fp.getRaw.bind(fp), set: fp.setRaw.bind(fp) },
+          get: fp.getRaw.bind(fp), set: fp.setRaw.bind(fp), inc: fp.incRaw.bind(fp) },
         sgn: { parse: parseBigUint, isval: fp.isValidSign.bind(fp),
-          get: fp.getSign.bind(fp), set: fp.setSign.bind(fp) },
+          get: fp.getSign.bind(fp), set: fp.setSign.bind(fp), inc: fp.incSign.bind(fp) },
         exp: { parse: parseBigUint, isval: fp.isValidExponent.bind(fp),
-          get: fp.getExponent.bind(fp), set: fp.setExponent.bind(fp) },
+          get: fp.getExponent.bind(fp), set: fp.setExponent.bind(fp), inc: fp.incExponent.bind(fp) },
         man: { parse: parseBigUint, isval: fp.isValidMantissa.bind(fp),
-          get: fp.getMantissa.bind(fp), set: fp.setMantissa.bind(fp) },
+          get: fp.getMantissa.bind(fp), set: fp.setMantissa.bind(fp), inc: fp.incMantissa.bind(fp) },
       };
 
       for (const key in configs) {
         const input = inputs[key];
         const radix = input.dataset.radix;
-        const { parse, isval, get, set } = configs[key];
+        const { parse, isval, get, set, inc } = configs[key];
 
         const check = () => { toggleValid(input, isval(parse(input.value, radix))); };
         const update = () => { input.value = get().toString(radix); toggleValid(input, true); };
@@ -159,6 +159,17 @@
         input.addEventListener('input', check);
         input.addEventListener('keydown', (e) => e.key === 'Enter' && commit());
         input.addEventListener('blur', update);
+
+        if (inc) {
+          const step = (neg) => { inc(neg); updateAll(); };
+
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              step(e.key === 'ArrowDown');
+            }
+          });
+        }
 
         fieldUpdate[key] = update;
       }
