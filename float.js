@@ -36,16 +36,29 @@ function incMod(value, max, neg) {
               : (value === max ? 0n : value + 1n));
 }
 
-class FloatingPoint {
-  constructor() {
-    this.exponentBits = 8n;
-    this.mantissaBits = 23n;
+class Format {
+  constructor(exponentBits, mantissaBits) {
+    this.exponentBits = BigInt(exponentBits);
+    this.mantissaBits = BigInt(mantissaBits);
     this.totalBits = 1n + this.exponentBits + this.mantissaBits;
-
     this.maxRaw = (1n << this.totalBits) - 1n;
     this.maxExponent = (1n << this.exponentBits) - 1n;
     this.maxMantissa = (1n << this.mantissaBits) - 1n;
+    this.exponentBias = (1n << (this.exponentBits - 1n)) - 1n;
+  }
 
+  equals(other) {
+    return (other instanceof Format &&
+      this.exponentBits === other.exponentBits &&
+      this.mantissaBits === other.mantissaBits);
+  }
+}
+
+const FP32 = new Format(8, 23);
+
+class FloatingPoint {
+  constructor(format) {
+    this.format = format;
     this.raw = 0n;
     this.sign = 0n;
     this.exponent = 0n;
@@ -53,19 +66,19 @@ class FloatingPoint {
   }
 
   updateParts() {
-    this.sign = (this.raw >> (this.exponentBits + this.mantissaBits)) & 1n;
-    this.exponent = (this.raw >> this.mantissaBits) & this.maxExponent;
-    this.mantissa = this.raw & this.maxMantissa;
+    this.sign = (this.raw >> (this.format.exponentBits + this.format.mantissaBits)) & 1n;
+    this.exponent = (this.raw >> this.format.mantissaBits) & this.format.maxExponent;
+    this.mantissa = this.raw & this.format.maxMantissa;
   }
 
   updateRaw() {
-    this.raw = (this.sign << this.exponentBits | this.exponent) << this.mantissaBits | this.mantissa;
+    this.raw = (this.sign << this.format.exponentBits | this.exponent) << this.format.mantissaBits | this.mantissa;
   }
 
-  isValidRaw(raw) { return raw != null && 0n <= raw && raw <= this.maxRaw; }
+  isValidRaw(raw) { return raw != null && 0n <= raw && raw <= this.format.maxRaw; }
   isValidSign(sign) { return sign != null && 0n <= sign && sign <= 1n; }
-  isValidExponent(exponent) { return exponent != null && 0n <= exponent && exponent <= this.maxExponent; }
-  isValidMantissa(mantissa) { return mantissa != null && 0n <= mantissa && mantissa <= this.maxMantissa; }
+  isValidExponent(exponent) { return exponent != null && 0n <= exponent && exponent <= this.format.maxExponent; }
+  isValidMantissa(mantissa) { return mantissa != null && 0n <= mantissa && mantissa <= this.format.maxMantissa; }
 
   getRaw() { return this.raw; }
   getSign() { return this.sign; }
@@ -98,7 +111,7 @@ class FloatingPoint {
   }
 
   incRaw(neg) {
-    this.raw = incMod(this.raw, this.maxRaw, neg);
+    this.raw = incMod(this.raw, this.format.maxRaw, neg);
     this.updateParts();
   }
   incSign() { 
@@ -106,11 +119,11 @@ class FloatingPoint {
     this.updateRaw();
   }
   incExponent(neg) {
-    this.exponent = incMod(this.exponent, this.maxExponent, neg);
+    this.exponent = incMod(this.exponent, this.format.maxExponent, neg);
     this.updateRaw();
   }
   incMantissa(neg) {
-    this.mantissa = incMod(this.mantissa, this.maxMantissa, neg);
+    this.mantissa = incMod(this.mantissa, this.format.maxMantissa, neg);
     this.updateRaw();
   }
 
@@ -119,17 +132,19 @@ class FloatingPoint {
   }
 
   setBit(index, bit) {
-    const mask = (1n << BigInt(index)) & this.maxRaw;
+    const mask = (1n << BigInt(index)) & this.format.maxRaw;
     const raw = bit ? (this.raw | mask) : (this.raw & ~mask);
     return this.setRaw(raw);
   }
 
   getNumber() {
+    if (!FP32.equals(this.format)) throw new Error("Unsupported format");
     return uint32ToFloat32(Number(this.raw));
   }
 
   setNumber(number) {
     if (number == null) return false;
+    if (!FP32.equals(this.format)) throw new Error("Unsupported format");
     return this.setRaw(BigInt(float32ToUint32(number)));
   }
 };

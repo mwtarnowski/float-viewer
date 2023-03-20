@@ -96,13 +96,13 @@
         man: { dec: $('man-dec-btn'), inc: $('man-inc-btn') },
       };
 
-      const fp = new FloatingPoint();
+      const fp = new FloatingPoint(FP32);
 
       let bitButtons = [];
       function generateBitGrid() {
-        const totalBits = Number(fp.totalBits);
-        const expIndex = Number(fp.mantissaBits);
-        const sgnIndex = Number(fp.mantissaBits + fp.exponentBits);
+        const totalBits = Number(fp.format.totalBits);
+        const expIndex = Number(fp.format.mantissaBits);
+        const sgnIndex = Number(fp.format.mantissaBits + fp.format.exponentBits);
 
         bitButtons = [];
         const grid = document.createDocumentFragment();
