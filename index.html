@@ -37,24 +37,32 @@
           <label class="field-label" for="raw-input">Hex Raw:</label>
           <div class="field-control">
             <input class="field-input" type="text" id="raw-input" data-radix="16">
+            <button class="field-button" type="button" id="raw-dec-btn">&minus;</button>
+            <button class="field-button" type="button" id="raw-inc-btn">&plus;</button>
           </div>
         </div>
         <div class="field-group">
           <label class="field-label" for="sgn-input">Sign:</label>
           <div class="field-control">
             <input class="field-input" type="text" id="sgn-input" data-part="sgn" data-radix="10">
+            <button class="field-button" type="button" id="sgn-dec-btn">&minus;</button>
+            <button class="field-button" type="button" id="sgn-inc-btn">&plus;</button>
           </div>
         </div>
         <div class="field-group">
           <label class="field-label" for="exp-input">Exponent:</label>
           <div class="field-control">
             <input class="field-input" type="text" id="exp-input" data-part="exp" data-radix="10">
+            <button class="field-button" type="button" id="exp-dec-btn">&minus;</button>
+            <button class="field-button" type="button" id="exp-inc-btn">&plus;</button>
           </div>
         </div>
         <div class="field-group">
           <label class="field-label" for="man-input">Significand:</label>
           <div class="field-control">
             <input class="field-input" type="text" id="man-input" data-part="man" data-radix="10">
+            <button class="field-button" type="button" id="man-dec-btn">&minus;</button>
+            <button class="field-button" type="button" id="man-inc-btn">&plus;</button>
           </div>
         </div>
       </div>
@@ -79,6 +87,13 @@
         sgn: $('sgn-input'),
         exp: $('exp-input'),
         man: $('man-input'),
+      };
+
+      const buttons = {
+        raw: { dec: $('raw-dec-btn'), inc: $('raw-inc-btn') },
+        sgn: { dec: $('sgn-dec-btn'), inc: $('sgn-inc-btn') },
+        exp: { dec: $('exp-dec-btn'), inc: $('exp-inc-btn') },
+        man: { dec: $('man-dec-btn'), inc: $('man-inc-btn') },
       };
 
       const fp = new FloatingPoint();
@@ -169,6 +184,10 @@
               step(e.key === 'ArrowDown');
             }
           });
+
+          const btns = buttons[key];
+          btns?.dec.addEventListener('click', () => step(true));
+          btns?.inc.addEventListener('click', () => step(false));
         }
 
         fieldUpdate[key] = update;

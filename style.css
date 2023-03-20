@@ -67,6 +67,11 @@ input {
   background-color: #ffffff;
 }
 
+button {
+  cursor: pointer;
+  background-color: #d9e8ff;
+}
+
 a {
   color: inherit;
 }
@@ -201,15 +206,19 @@ a {
   align-items: center;
 }
 
+.field-input,
+.field-button {
+  height: 1.875rem;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+
 .field-input {
   --color: #202020;
   --color-invalid: #20202073;
 
   flex: 1;
-  height: 1.875rem;
   padding: 0.2rem 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 1rem;
   font-weight: 500;
   color: var(--color);
   letter-spacing: 0.05em;
@@ -241,6 +250,15 @@ a {
 .field-input[data-part="man"] {
   --color: #a01c34;
   --color-invalid: #a01c3466;
+}
+
+.field-button {
+  aspect-ratio: 1 / 1;
+  font-weight: 700;
+}
+
+.field-button:hover {
+  filter: brightness(90%);
 }
 
 @media (min-width: 640px) {
