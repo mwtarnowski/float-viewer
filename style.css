@@ -57,13 +57,15 @@ main {
 }
 
 input,
+select,
 button {
   color: #202020;
   border: 1px solid #cccccc;
   border-radius: 4px;
 }
 
-input {
+input,
+select {
   background-color: #ffffff;
 }
 
@@ -272,4 +274,40 @@ a {
     width: 6rem;
     font-size: 1rem;
   }
+}
+
+.format-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.format-form label {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.format-form select,
+.format-form input,
+.format-form button {
+  height: 1.875rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.format-form button {
+  flex: 1;
+  min-width: 5rem;
+  max-width: 9rem;
+  font-weight: 500;
+}
+
+.format-form button:hover {
+  filter: brightness(90%);
+}
+
+.format-custom {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }

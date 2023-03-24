@@ -67,6 +67,27 @@
         </div>
       </div>
 
+      <div class="hline"></div>
+
+      <div class="format-selector">
+        <form id="format-form" class="format-form">
+          <label for="format-select">Format:</label>
+          <select id="format-select" name="format" required>
+            <option value="" selected>-- Choose a format --</option>
+            <option value="fp32">Single (fp32)</option>
+            <option value="fp64">Double (fp64)</option>
+            <option value="custom">Custom</option>
+          </select>
+          <div id="custom-fields" class="format-custom" style="display: none;">
+            <label for="exp-bits"><abbr title="Exponent Bits">E</abbr></label>
+            <input type="number" id="exp-bits" name="exponent" min="1" max="11" step="1" placeholder="8">
+            <label for="man-bits"><abbr title="Mantissa Bits">M</abbr></label>
+            <input type="number" id="man-bits" name="mantissa" min="1" max="52" step="1" placeholder="23">
+          </div>
+          <button type="submit">Apply</button>
+        </form>
+      </div>
+
     </div>
   </main>
 
@@ -95,6 +116,12 @@
         exp: { dec: $('exp-dec-btn'), inc: $('exp-inc-btn') },
         man: { dec: $('man-dec-btn'), inc: $('man-inc-btn') },
       };
+
+      const formatForm = $('format-form');
+      const formatSelect = $('format-select');
+      const customFields = $('custom-fields');
+      const expBitsInput = $('exp-bits');
+      const manBitsInput = $('man-bits');
 
       const fp = new FloatingPoint(FP32);
 
@@ -209,7 +236,41 @@
         updateAll();
       }
 
+      const predefinedFormats = {
+        fp32: FP32,
+        fp64: FP64,
+      };
+
+      function updateCustomFields() {
+        if (formatSelect.value === 'custom') {
+          customFields.style.display = 'flex';
+          expBitsInput.required = true;
+          manBitsInput.required = true;
+        } else {
+          customFields.style.display = 'none';
+          expBitsInput.required = false;
+          manBitsInput.required = false;
+        }
+      }
+
+      formatSelect.addEventListener('change', updateCustomFields);
+
+      formatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const selected = formatSelect.value;
+        const format = predefinedFormats[selected];
+        if (format) {
+          setFormat(format);
+        } else if (selected === 'custom') {
+          const expBits = parseInt(expBitsInput.value);
+          const manBits = parseInt(manBitsInput.value);
+          const format = new Format(expBits, manBits);
+          setFormat(format);
+        }
+      });
+
       setFormat(FP32);
+      updateCustomFields();
     });
   </script>
 
