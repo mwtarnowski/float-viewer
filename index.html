@@ -99,10 +99,10 @@
       const fp = new FloatingPoint(FP32);
 
       let bitButtons = [];
-      function generateBitGrid() {
-        const totalBits = Number(fp.format.totalBits);
-        const expIndex = Number(fp.format.mantissaBits);
-        const sgnIndex = Number(fp.format.mantissaBits + fp.format.exponentBits);
+      function generateBitGrid(format) {
+        const totalBits = Number(format.totalBits);
+        const expIndex = Number(format.mantissaBits);
+        const sgnIndex = Number(format.mantissaBits + format.exponentBits);
 
         bitButtons = [];
         const grid = document.createDocumentFragment();
@@ -203,8 +203,13 @@
         updateFields();
       });
 
-      generateBitGrid();
-      updateAll();
+      function setFormat(format) {
+        fp.setFormat(format);
+        generateBitGrid(format);
+        updateAll();
+      }
+
+      setFormat(FP32);
     });
   </script>
 

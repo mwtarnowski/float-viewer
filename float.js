@@ -137,6 +137,15 @@ class FloatingPoint {
     this.mantissa = 0n;
   }
 
+  setFormat(format) {
+    if (this.format.equals(format)) return;
+    const oldFormat = this.format;
+    this.format = format;
+    this.isFP64 = FP64.equals(this.format);
+    [this.exponent, this.mantissa] = convert(this.exponent, this.mantissa, oldFormat, this.format);
+    this.updateRaw();
+  }
+
   updateParts() {
     [this.sign, this.exponent, this.mantissa] = decode(this.raw, this.format);
   }
