@@ -74,6 +74,8 @@
           <label for="format-select">Format:</label>
           <select id="format-select" name="format" required>
             <option value="" selected>-- Choose a format --</option>
+            <option value="fp16">Half (fp16)</option>
+            <option value="bf16">Bfloat16 (bf16)</option>
             <option value="fp32">Single (fp32)</option>
             <option value="fp64">Double (fp64)</option>
             <option value="custom">Custom</option>
@@ -237,8 +239,7 @@
       }
 
       const predefinedFormats = {
-        fp32: FP32,
-        fp64: FP64,
+        fp16: FP16, bf16: BF16, fp32: FP32, fp64: FP64,
       };
 
       function updateCustomFields() {

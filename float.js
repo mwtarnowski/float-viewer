@@ -64,6 +64,8 @@ class Format {
   }
 }
 
+const FP16 = new Format(5, 10);
+const BF16 = new Format(8, 7);
 const FP32 = new Format(8, 23);
 const FP64 = new Format(11, 52);
 
