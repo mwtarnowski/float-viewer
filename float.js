@@ -1,18 +1,13 @@
-const buffer = new ArrayBuffer(4);
-const uview = new Uint32Array(buffer);
-const fview = new Float32Array(buffer);
+const buffer = new ArrayBuffer(8);
+const uview = new BigUint64Array(buffer);
+const fview = new Float64Array(buffer);
 
-function numberToFloat32(x) {
-  fview[0] = x;
-  return fview[0];
-}
-
-function float32ToUint32(x) {
+function float64ToUint64(x) {
   fview[0] = x;
   return uview[0];
 }
 
-function uint32ToFloat32(n) {
+function uint64ToFloat64(n) {
   uview[0] = n;
   return fview[0];
 }
@@ -28,12 +23,27 @@ function parseFloatStrict(str) {
   if (!str) return;
   const number = Number(str);
   if (isNaN(number) && str !== "NaN") return;
-  return numberToFloat32(number);
+  return number;
 }
 
 function incMod(value, max, neg) {
   return (neg ? (value === 0n ? max : value - 1n) 
               : (value === max ? 0n : value + 1n));
+}
+
+function bitLength(value) {
+  // if (value === 0n) return 0n;
+  return BigInt(value.toString(2).length);
+}
+
+function rshiftRNE(value, shift) {
+  if (shift === 0n) return value;
+  const rem = value & ((1n << shift) - 1n);
+  const half = 1n << (shift - 1n);
+  value >>= shift;
+  if (rem > half || (rem === half && (value & 1n)))
+    value += 1n;
+  return value;
 }
 
 class Format {
@@ -55,10 +65,72 @@ class Format {
 }
 
 const FP32 = new Format(8, 23);
+const FP64 = new Format(11, 52);
+
+function encode(sign, exponent, mantissa, format) {
+  return (sign << format.exponentBits | exponent) << format.mantissaBits | mantissa;
+}
+
+function decode(raw, format) {
+  const sign = (raw >> (format.exponentBits + format.mantissaBits)) & 1n;
+  const exponent = (raw >> format.mantissaBits) & format.maxExponent;
+  const mantissa = raw & format.maxMantissa;
+  return [sign, exponent, mantissa];
+}
+
+function convert(exponent, mantissa, srcFormat, dstFormat) {
+  // Handle Inf and NaN
+  if (exponent === srcFormat.maxExponent) {
+    const isNaN = mantissa !== 0n;
+    return [dstFormat.maxExponent, isNaN ? dstFormat.maxMantissa : 0n];
+  }
+
+  // Handle zero and subnormals
+  if (exponent === 0n) {
+    if (mantissa === 0n) {
+      return [0n, 0n];
+    }
+
+    // Normalize subnormal
+    const shift = srcFormat.mantissaBits + 1n - bitLength(mantissa);
+    mantissa = (mantissa << shift) & srcFormat.maxMantissa;
+    exponent = 1n - shift;
+  }
+
+  exponent += dstFormat.exponentBias - srcFormat.exponentBias;
+
+  // Handle exponent overflow
+  if (exponent >= dstFormat.maxExponent) {
+    return [dstFormat.maxExponent, 0n];
+  }
+
+  let mantissaShift = dstFormat.mantissaBits - srcFormat.mantissaBits;
+
+  // Handle subnormal result
+  if (exponent <= 0n) {
+    mantissa |= 1n << srcFormat.mantissaBits;
+    mantissaShift -= (1n - exponent);
+    exponent = 0n;
+  }
+
+  if (mantissaShift < 0) {
+    mantissa = rshiftRNE(mantissa, -mantissaShift);
+    if (mantissa > dstFormat.maxMantissa) {
+      mantissa = 0n;
+      exponent += 1n;
+    }
+  } else {
+    mantissa <<= mantissaShift;
+  }
+
+  return [exponent, mantissa];
+}
 
 class FloatingPoint {
   constructor(format) {
     this.format = format;
+    this.isFP64 = FP64.equals(this.format);
+
     this.raw = 0n;
     this.sign = 0n;
     this.exponent = 0n;
@@ -66,13 +138,11 @@ class FloatingPoint {
   }
 
   updateParts() {
-    this.sign = (this.raw >> (this.format.exponentBits + this.format.mantissaBits)) & 1n;
-    this.exponent = (this.raw >> this.format.mantissaBits) & this.format.maxExponent;
-    this.mantissa = this.raw & this.format.maxMantissa;
+    [this.sign, this.exponent, this.mantissa] = decode(this.raw, this.format);
   }
 
   updateRaw() {
-    this.raw = (this.sign << this.format.exponentBits | this.exponent) << this.format.mantissaBits | this.mantissa;
+    this.raw = encode(this.sign, this.exponent, this.mantissa, this.format);
   }
 
   isValidRaw(raw) { return raw != null && 0n <= raw && raw <= this.format.maxRaw; }
@@ -109,6 +179,15 @@ class FloatingPoint {
     this.updateRaw();
     return true;
   }
+  setParts(sign, exponent, mantissa) {
+    if (!this.isValidSign(sign) || !this.isValidExponent(exponent) || !this.isValidMantissa(mantissa)) return false;
+    if (this.sign === sign && this.exponent === exponent && this.mantissa === mantissa) return false;
+    this.sign = sign;
+    this.exponent = exponent;
+    this.mantissa = mantissa;
+    this.updateRaw();
+    return true;
+  }
 
   incRaw(neg) {
     this.raw = incMod(this.raw, this.format.maxRaw, neg);
@@ -138,14 +217,24 @@ class FloatingPoint {
   }
 
   getNumber() {
-    if (!FP32.equals(this.format)) throw new Error("Unsupported format");
-    return uint32ToFloat32(Number(this.raw));
+    if (this.isFP64) {
+      return uint64ToFloat64(this.raw);
+    } else {
+      const [exponent, mantissa] = convert(this.exponent, this.mantissa, this.format, FP64);
+      const raw = encode(this.sign, exponent, mantissa, FP64);
+      return uint64ToFloat64(raw);
+    }
   }
 
   setNumber(number) {
-    if (number == null) return false;
-    if (!FP32.equals(this.format)) throw new Error("Unsupported format");
-    return this.setRaw(BigInt(float32ToUint32(number)));
+    if (this.isFP64) {
+      return this.setRaw(float64ToUint64(number));
+    } else {
+      const raw = float64ToUint64(number);
+      let [sign, exponent, mantissa] = decode(raw, FP64);
+      [exponent, mantissa] = convert(exponent, mantissa, FP64, this.format);
+      return this.setParts(sign, exponent, mantissa);
+    }
   }
 };
 
