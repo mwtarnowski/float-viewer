@@ -179,8 +179,8 @@
       }
 
       const configs = {
-        flt: { parse: parseFloatStrict, isval: x => x != null,
-          get: fp.getNumber.bind(fp), set: fp.setNumber.bind(fp) },
+        flt: { parse: str => str, isval: isValidFloatString,
+          get: fp.getString.bind(fp), set: fp.setString.bind(fp) },
         raw: { parse: parseBigUint, isval: fp.isValidRaw.bind(fp), 
           get: fp.getRaw.bind(fp), set: fp.setRaw.bind(fp), inc: fp.incRaw.bind(fp) },
         sgn: { parse: parseBigUint, isval: fp.isValidSign.bind(fp),

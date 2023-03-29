@@ -1,3 +1,5 @@
+const MAX_DECIMAL_PRECISION = 21;
+
 const buffer = new ArrayBuffer(8);
 const uview = new BigUint64Array(buffer);
 const fview = new Float64Array(buffer);
@@ -24,6 +26,12 @@ function parseFloatStrict(str) {
   const number = Number(str);
   if (isNaN(number) && str !== "NaN") return;
   return number;
+}
+
+function isValidFloatString(str) {
+  if (!str) return false;
+  if (isFinite(Number(str))) return true;
+  return /^[+-]?inf(?:inity)?$|^nan$/i.test(str);
 }
 
 function incMod(value, max, neg) {
@@ -126,6 +134,42 @@ function convert(exponent, mantissa, srcFormat, dstFormat) {
   }
 
   return [exponent, mantissa];
+}
+
+function decimalRepresentation(totalExponent, fullMantissa, maxLength) {
+  if (fullMantissa === 0n) {
+    return ['0', 0];
+  }
+
+  let decimalExponent, decimalMantissa;
+  if (totalExponent >= 0n) {
+    decimalMantissa = fullMantissa << totalExponent;
+    decimalExponent = 0;
+  } else {
+    decimalMantissa = fullMantissa * (5n ** -totalExponent);
+    decimalExponent = Number(totalExponent);
+  }
+
+  let digits = decimalMantissa.toString();
+  let pointPos = decimalExponent + digits.length;
+
+  digits = digits.replace(/0+$/, '') || '0';
+  if (digits.length <= maxLength) {
+    return [digits, pointPos];
+  }
+  
+  const roundDigit = Number(digits[maxLength]);
+  digits = digits.slice(0, maxLength);
+  if (roundDigit >= 5) {
+    digits = String(BigInt(digits) + 1n);
+    if (digits.length > maxLength) {
+      digits = digits.slice(0, maxLength);
+      pointPos += 1;
+    }
+  }
+
+  digits = digits.replace(/0+$/, '') || '0';
+  return [digits, pointPos];
 }
 
 class FloatingPoint {
@@ -246,6 +290,43 @@ class FloatingPoint {
       [exponent, mantissa] = convert(exponent, mantissa, FP64, this.format);
       return this.setParts(sign, exponent, mantissa);
     }
+  }
+
+  getString() {
+    const signStr = this.sign === 0n ? '' : '-';
+    if (this.exponent === this.format.maxExponent) {
+      return this.mantissa === 0n ? (signStr + 'Infinity') : 'NaN';
+    }
+
+    const implicitBit = this.exponent === 0n ? 0n : 1n;
+    const fullSignificand = this.mantissa + (implicitBit << this.format.mantissaBits);
+    const unbiasedExponent = this.exponent - this.format.exponentBias - implicitBit + 1n;
+    const totalExponent = unbiasedExponent - this.format.mantissaBits;
+    const [digits, pointPos] = decimalRepresentation(totalExponent, fullSignificand, MAX_DECIMAL_PRECISION);
+
+    if (-6 <= pointPos && pointPos < MAX_DECIMAL_PRECISION) {
+      if (pointPos >= digits.length) return signStr + digits.padEnd(pointPos, '0') + '.0';
+      if (pointPos >= 1) return signStr + digits.slice(0, pointPos) + '.' + digits.slice(pointPos);
+      return signStr + '0.' + '0'.repeat(-pointPos) + digits;
+    } else {
+      const expStr = (pointPos - 1 >= 0 ? '+' : '-') + Math.abs(pointPos - 1).toString();
+      if (digits.length === 1) return signStr + digits[0] + '.0e' + expStr;
+      return signStr + digits[0] + '.' + digits.slice(1) + 'e' + expStr;
+    }
+  }
+
+  setString(str) {
+    const number = Number(str);
+    if (isFinite(number))
+      return this.setNumber(number);
+    str = str.toLowerCase();
+    if (str === 'inf' || str === '+inf' || str === 'infinity' || str === '+infinity')
+      return this.setParts(0n, this.format.maxExponent, 0n);
+    if (str === '-inf' || str === '-infinity')
+      return this.setParts(1n, this.format.maxExponent, 0n);
+    if (str === 'nan')
+      return this.setParts(0n, this.format.maxExponent, this.format.maxMantissa);
+    return false;
   }
 };
 
