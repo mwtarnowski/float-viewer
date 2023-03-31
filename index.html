@@ -65,6 +65,12 @@
             <button class="field-button" type="button" id="man-inc-btn">&plus;</button>
           </div>
         </div>
+        <div class="field-group">
+          <label class="field-label" for="ulp-input">ULP:</label>
+          <div class="field-control">
+            <input class="field-input" type="text" id="ulp-input" readonly>
+          </div>
+        </div>
       </div>
 
       <div class="hline"></div>
@@ -110,6 +116,7 @@
         sgn: $('sgn-input'),
         exp: $('exp-input'),
         man: $('man-input'),
+        ulp: $('ulp-input'),
       };
 
       const buttons = {
@@ -163,6 +170,7 @@
       let fieldUpdate = {};
       function updateFields() {
         for (const key in fieldUpdate) fieldUpdate[key]();
+        inputs.ulp.value = fp.getUlpString();
       }
 
       function updateBitGrid() {

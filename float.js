@@ -328,6 +328,21 @@ class FloatingPoint {
       return this.setParts(0n, this.format.maxExponent, this.format.maxMantissa);
     return false;
   }
+
+  getUlpString() {
+    if (this.exponent === this.format.maxExponent) {
+      return 'N/A';
+    }
+
+    const implicitBit = this.exponent === 0n ? 0n : 1n;
+    const unbiasedExponent = this.exponent - this.format.exponentBias - implicitBit + 1n;
+    const totalExponent = unbiasedExponent - this.format.mantissaBits;
+    const [digits, pointPos] = decimalRepresentation(totalExponent, 1n, MAX_DECIMAL_PRECISION);
+
+    const expStr = (pointPos - 1 >= 0 ? '+' : '-') + Math.abs(pointPos - 1).toString();
+    if (digits.length === 1) return digits[0] + '.0e' + expStr;
+    return digits[0] + '.' + digits.slice(1) + 'e' + expStr;
+  }
 };
 
 
