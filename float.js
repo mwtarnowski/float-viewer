@@ -179,8 +179,9 @@ class FloatingPoint {
 
     this.raw = 0n;
     this.sign = 0n;
-    this.exponent = 0n;
+    this.exponent = this.format.exponentBias;
     this.mantissa = 0n;
+    this.updateRaw();
   }
 
   setFormat(format) {
