@@ -87,8 +87,10 @@ a {
 .site-logo {
   width: 1.5rem;
   height: 1.5rem;
-  background-color: #082c8f;
-  border-radius: 4px;
+}
+
+.site-logo path {
+  fill: #082c8f;
 }
 
 .site-title {
