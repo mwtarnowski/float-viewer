@@ -1,6 +1,14 @@
+@font-face {
+  font-family: 'Reddit Mono';
+  src: url('fonts/RedditMono[wght].woff2') format('woff2');
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
 :root {
   --font-base: system-ui, sans-serif;
-  --font-mono: ui-monospace, monospace;
+  --font-mono: 'Reddit Mono', ui-monospace, monospace;
 }
 
 html {
